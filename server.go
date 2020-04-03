@@ -1,9 +1,14 @@
 package main
 
 import (
+	"io"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-gin-poc/controller"
+	"github.com/golang-gin-poc/middlewares"
 	"github.com/golang-gin-poc/service"
+	gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -12,7 +17,14 @@ var (
 )
 
 func main() {
+	setupLogOutput()
 	router := gin.New()
+
+	router.Use(gin.Recovery(),
+		middlewares.Logger(),
+		middlewares.BasicAuth(),
+		gindump.Dump(),
+	)
 
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -28,4 +40,9 @@ func main() {
 	})
 
 	router.Run(":8080")
+}
+
+func setupLogOutput() {
+	file, _ := os.Create("gin.log")
+	gin.DefaultWriter = io.MultiWriter(file, os.Stdout)
 }
